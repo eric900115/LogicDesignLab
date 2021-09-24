@@ -1,4 +1,4 @@
-# NTHU-Logic_Design_Lab
+# NTHU-Logic Design Lab
 
 Lab1:Gate-level modeling
 ---
