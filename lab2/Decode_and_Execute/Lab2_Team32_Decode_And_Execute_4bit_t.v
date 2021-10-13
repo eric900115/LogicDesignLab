@@ -13,16 +13,6 @@ Decode_And_Execute d1(
     .sel(sel), 
     .rd(rd)
 );
-/*
-// ADD d2(rs, rt, rd);
-//ADD m0(rs, rt, I0);
-//SUB m1(rs, rt, I1);
-//Bitwise_AND m2(rs, rt, rd);
-//Bitwise_OR m3(rs, rt, rd);
-//rs_L_shift m4(rs, rd);
-//rt_R_shift m5(rt, rd);
-//Equality m6(rs, rt, rd);
-Grater_than m7(rs, rt, rd);   */
     
 initial begin
     repeat(8)begin
@@ -69,25 +59,5 @@ initial begin
     end
     #1 $finish;
 end
-/*
-reg a = 1'b0 , b = 1'b0;
-wire And, Or, Xor, Nand, Not, Nor, Xnor;
 
-AND d0(a, b, And);
-OR d1(a, b, Or);
-XOR d2(a, b, Xor);
-NAND d3(a, b, Nand);
-NOT d4(a, Not);
-NOR d5(a, b, Nor);
-XNOR d6(a, b, Xnor);
-
-initial begin
-
-    repeat(4)begin
-    
-        #10 {a, b} = {a, b} +1'b1;
-    end
-
-end
-*/
 endmodule
