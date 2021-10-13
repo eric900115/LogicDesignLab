@@ -7,7 +7,7 @@ reg cin = 1'b0;
 wire [7:0] sum;
 wire cout;
 
-Carry_Look_Ahead_Adder_8bit cla(a, b, cin, sum, cout);
+Ripple_Carry_Adder RCA(a, b, cin, cout, sum);
 
 initial begin
   repeat (2 ** 16) begin
@@ -23,7 +23,7 @@ initial begin
 	if(a + b + cin != {cout, sum})
 		$display("error occurs at a=%b b=%b cin=%b cout=%b sum=%b", a, b, cin, cout,sum);
   end
-  
+
   #1 $finish;
   
 end  
