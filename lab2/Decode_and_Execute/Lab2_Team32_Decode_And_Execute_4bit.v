@@ -135,12 +135,6 @@ wire w0, w1, w2, w3, w4, w5, w6, w7;
 wire w8, w9, w10, w11, w12, w13, w14, w15;
 wire w16, w17, w18;
 wire zero, one;
-/*
-NOT m0(rs[0], rs0_neg);
-OR m1(rs[0], rs0_neg, rd[1]);
-AND m2(rs[0], rs0_neg, rd[2]);
-OR m3(rs[0], rs0_neg, rd[3]);
-*/
 
 NOT not_rs0(rs[0], rs0_neg);
 AND Zero(rs[0], rs0_neg, zero);

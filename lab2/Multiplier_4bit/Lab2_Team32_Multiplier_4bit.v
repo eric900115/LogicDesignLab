@@ -11,7 +11,6 @@ wire [2:0] p4;
 wire [1:0] p5;
 wire p6;
 
-//wire [3:0] c0, c1, c2, c3, c4, c5, c6, c7, c8;
 wire [2:0] c0, c1;
 wire [2:0] carry;
 
