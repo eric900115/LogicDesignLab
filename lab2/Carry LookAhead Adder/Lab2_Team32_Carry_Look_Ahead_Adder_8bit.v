@@ -97,15 +97,6 @@ input [1:0] pg, gg;
 input cin;
 //cout[0] == c4, cout[1] == c8
 output [1:0] cout;
-/*
-// c4 = c0 * (pg[0,3] + gg[0,3])
-wire pg_or_gg0, pg_or_gg1;
-OR or_pg_gg0(pg[0], gg[0], pg_or_gg0);
-AND and_c0_pggg(pg_or_gg0, cin, cout[0]);
-// c8 = c4 * (pg[4,7] + gg[4,7])
-OR or_pg_gg4(pg[1], gg[1], pg_or_gg1);
-AND and_pg_gg4(pg_or_gg1, cout[0], cout[1]);
-*/
 wire [5:0]w;
 
 AND and_c1(cin, pg[0], w[0]);
