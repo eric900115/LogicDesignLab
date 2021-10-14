@@ -26,10 +26,11 @@ always @(*) begin
         4'h8: seg = 8'b00000001;
         4'h9: seg = 8'b00001001;
         4'hA: seg = 8'b00010001;
-        4'hB: seg = 8'b00000001;
+        4'hB: seg = 8'b11000001;
         4'hC: seg = 8'b01100011;
-        4'hD: seg = 8'b00000011;
-        default: seg = 8'b01100001;
+        4'hD: seg = 8'b10000101;
+        4'hE: seg = 8'b01100001;
+        default : seg = 8'b01110001;
     endcase
 
 end
