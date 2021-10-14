@@ -63,7 +63,8 @@ initial begin
         #4
         {a, b} = {a, b} + 4'b0001;
     end
-    #5 done = 1'b1;
+    #1 error = 1'b0;
+    #4 done = 1'b1;
     #5 $finish;
 end
 

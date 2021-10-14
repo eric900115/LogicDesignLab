@@ -9,10 +9,10 @@ output cout;
 wire rs0_neg;
 wire [2:0] c;
 
-Full_Adder m2(.a(a[0]), .b(b[0]), .cin(cin), .cout(c[0]), .sum(sum[0]));
+Full_Adder m2(.a(a[0]), .b(1'b0), .cin(cin), .cout(c[0]), .sum(sum[0]));
 Full_Adder m3(.a(a[1]), .b(b[1]), .cin(c[0]), .cout(c[1]), .sum(sum[1]));
 Full_Adder m4(.a(a[2]), .b(b[2]), .cin(c[1]), .cout(c[2]), .sum(sum[2]));
-Full_Adder m5(.a(a[3]), .b(1'b0), .cin(c[2]), .cout(cout), .sum(sum[3]));
+Full_Adder m5(.a(a[3]), .b(b[3]), .cin(c[2]), .cout(cout), .sum(sum[3]));
 
 endmodule
 
