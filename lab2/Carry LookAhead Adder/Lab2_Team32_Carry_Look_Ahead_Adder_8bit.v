@@ -104,7 +104,7 @@ OR or_c1(gg[0], w[0], cout[0]);
 
 AND and_c2(pg[1], gg[0], w[1]);
 AND_4bits and_c21(pg[1], pg[0], cin, 1'b1, w[2]);
-OR_4bits or_c2(gg[1], w[1], w[2], cout[1]);
+OR_4bits or_c2(gg[1], w[1], w[2], 1'b0, cout[1]);
 
 endmodule
 
