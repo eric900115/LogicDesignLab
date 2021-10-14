@@ -63,6 +63,18 @@ initial begin
         #4
         {a, b} = {a, b} + 4'b0001;
     end
+    cin = 1'b1;
+    repeat(2 ** 8) begin
+        #1
+        if(a + b + cin != {cout, sum}) begin
+           error = 1'b1; 
+        end
+        else begin
+            error = 1'b0;
+        end
+        #4
+        {a, b} = {a, b} + 4'b0001;
+    end
     #1 error = 1'b0;
     #4 done = 1'b1;
     #5 $finish;
