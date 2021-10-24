@@ -19,3 +19,13 @@
   - 4-bit multiplier 
   - An exhausted testbench design
   - Decode and execute (FPGA)
+- Lab3:Sequential Circuits
+  - Basic
+    - Clock Divider
+    - 128 x 8 Memory Array Memory
+  - 4-bit Ping-Pong Counter
+  - First-In First Out Circular Queue
+  - Multi-Bank Memory
+  - Round-Robin FIFO Arbiter
+  - 4-bit Parameterized Ping-Pong Counter
+  - 4-bit Paramterized Ping-Pong Counter（FPGA）
