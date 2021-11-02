@@ -1,16 +1,16 @@
 `timescale 1ns/1ps
 
-module Carry_Look_Ahead_Adder_8bit(a, b, c0, sum, c8);
+module Carry_Look_Ahead_Adder_8bit(a, b, c0, s, c8);
 input [7:0] a, b;
 input c0;
-output [7:0] sum;
+output [7:0] s;
 output c8;
 
 wire c4;
 wire [1:0] pg, gg;
 
-CLA_4 cla0(a[3:0], b[3:0], c0, c4, sum[3:0], pg[0], gg[0]);
-CLA_4 cla1(a[7:4], b[7:4], c4, c8, sum[7:4], pg[1], gg[1]);
+CLA_4 cla0(a[3:0], b[3:0], c0, c4, s[3:0], pg[0], gg[0]);
+CLA_4 cla1(a[7:4], b[7:4], c4, c8, s[7:4], pg[1], gg[1]);
 
 CLA_2bits cla_2bits({c8, c4}, pg, gg, c0);
 
