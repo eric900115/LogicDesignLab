@@ -29,3 +29,9 @@
   - Round-Robin FIFO Arbiter
   - 4-bit Parameterized Ping-Pong Counter
   - 4-bit Paramterized Ping-Pong Counter（FPGA）
+- Lab4:Finite State Machines
+  - Basic
+    - Moore Machine
+    - Mealy Machine
+    - Many-to-One Linear-Feedback Shift Register
+    - One-to-Many Linear-Feedback Shift Register
