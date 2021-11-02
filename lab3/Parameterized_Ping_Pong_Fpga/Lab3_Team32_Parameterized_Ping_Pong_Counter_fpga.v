@@ -29,93 +29,6 @@ Parameterized_Ping_Pong_Counter ping_pong_counter(.clk(clk_19), .rst_n(reset), .
 select_seven_segment seven_segment_sel(seg, clk_27, seg_4, direct, num);
 
 endmodule
-/*
-module select_seven_segment(seg, an, cnt, direction, clk);
-
-input clk;
-input [4-1:0] cnt;
-input direction;
-output [4-1:0] an;
-output [8-1:0] seg;
-
-// FIXME: 'an_idx' should be 2bit, but it doesn't work, idk why.
-//        and 3bits work, so don't touch it.
-reg [2-1:0] an_idx;  // index of current updating an
-reg [4-1:0] in;
-reg in_type;  // 0: direction  1: out
-
-
-// Sequential: index of current updating an
-always @(posedge clk) begin
-    if (an_idx == 2'b11) begin
-        an_idx <= 2'b00;
-    end
-    else begin
-        an_idx <= an_idx + 2'b01;
-    end
-end
-
-assign an[3] = (an_idx == 2'b11) ? 1'b0 : 1'b1;  // out[1]
-assign an[2] = (an_idx == 2'b10) ? 1'b0 : 1'b1;  // out[0]
-assign an[1] = (an_idx == 2'b01) ? 1'b0 : 1'b1;  // direction
-assign an[0] = (an_idx == 2'b00) ? 1'b0 : 1'b1;  // direction
-
-// Combinational: display segments
-always @(*) begin
-    if (an_idx == 2'b10) begin
-        in_type = 1'b1;
-        in = (cnt >= 4'd10) ? (cnt - 4'd10) : cnt;
-    end
-    else if (an_idx == 2'b11) begin
-        in_type = 1'b1;
-        in = (cnt >= 4'd10) ? 4'b0001 : 4'b0000;
-    end
-    else begin
-        in_type = 1'b0;
-        in = {3'b0, direction};
-    end
-end
-
-Seven_Segment_Display seven_segment_display(
-    .seg(seg),
-    .in(in),
-    .in_type(in_type)
-);
-
-endmodule
-*/
-module Seven_Segment_Display (seg, in);
-
-input [4-1:0] in;
-output reg [8-1:0] seg; // 0~6: ca~cg  7: dp
-
-// Combinational: next seg
-always @(*) begin
-
-        case(in)
-            4'd0: begin seg = 8'b11000000; end
-            4'd1: begin seg = 8'b11111001; end
-            4'd2: begin seg = 8'b10100100; end
-            4'd3: begin seg = 8'b10110000; end
-            4'd4: begin seg = 8'b10011001; end
-            4'd5: begin seg = 8'b10010010; end
-            4'd6: begin seg = 8'b10000010; end
-            4'd7: begin seg = 8'b11111000; end
-            4'd8: begin seg = 8'b10000000; end
-            4'd9: begin seg = 8'b10010000; end
-            // dot stand for unknown 'in'
-            4'ha: begin seg = 8'b00001000; end
-            4'hb: begin seg = 8'b00000011; end
-            4'hc: begin seg = 8'b01000110; end
-            4'hd: begin seg = 8'b00100001; end
-            4'he: begin seg = 8'b00000110; end
-            4'hf: begin seg = 8'b00001110; end
-            default: begin seg = 8'b01111111; end
-        endcase
-    end
-
-endmodule
-
 
 
 module select_seven_segment(seg, clk, seg_4, direct, num);
@@ -151,8 +64,8 @@ always @(*)begin
 	endcase
 end
 
-//Seven_Segment segment0(seg, data);
-Seven_Segment_Display seven_segment_display(seg, data);
+Seven_Segment segment0(seg, data);
+
 
 always @(*)begin
 	case(counter)
@@ -184,10 +97,9 @@ always @(*)begin
 	
 end	
 
-
-
 endmodule
-/*
+
+
 module Seven_Segment(seg, data);	
 input [3:0] data;
 output [7:0] seg;
@@ -214,73 +126,9 @@ always @(*) begin
     endcase
 
 end
-endmodule */
+endmodule 
 
 
-/*
-
-module Seven_Segment(seg, data);
-input [3:0] data;
-output [7:0] seg;
-
-reg [7:0] seg;
-
-always @(*) begin
-
-    case (data)
-        4'h0: seg = 8'b00000011;
-        4'h1: seg = 8'b10011111;
-        4'h2: seg = 8'b00100101;
-        4'h3: seg = 8'b00001101;
-        4'h4: seg = 8'b10011001;
-        4'h5: seg = 8'b01001001;
-        4'h6: seg = 8'b01000001;
-        4'h7: seg = 8'b00011111;
-        4'h8: seg = 8'b00000001;
-        4'h9: seg = 8'b00001001;
-        4'hA: seg = 8'b00111011;
-        4'hB: seg = 8'b11000111;
-        default : seg = 8'b01100001;
-    endcase
-
-end
-//assign seg = 8'd100;
-
-endmodule*/
-
-/*
-module clock_div_27(clk_origin, clk_derived);
-
-input clk_origin;
-output clk_derived;
-
-reg [25-1:0] cnt;
-wire [25-1:0] next_cnt;
-
-always @(posedge clk_origin) begin
-  cnt <= next_cnt;
-end
-
-assign next_cnt = cnt + 1;
-assign clk_derived = cnt[25-1];
-
-endmodule
-
-
-module clock_div_19 (clk_origin, clk_derived);
-
-input clk_origin;
-output clk_derived;
-
-reg [16-1:0] cnt;
-wire [16-1:0] next_cnt;
-
-always @(posedge clk_origin) begin
-  cnt <= next_cnt;
-end
-
-endmodule
-*/
 module clock_div_27(clk, slow_clk);
 input clk;
 output slow_clk;

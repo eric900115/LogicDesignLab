@@ -5,6 +5,7 @@ input clk, rst_n;
 input enable;
 output direction;
 output [3:0] out;
+
 reg [3:0] out, nxt_out;
 reg direction, nxt_dir;
 
@@ -20,38 +21,30 @@ always @(posedge clk)begin
     end    
 end   
 
-// comb for direction
+// combinational circuit for direction
 always @(*)begin
     if(enable == 1'b1)begin
-       if(out == 4'b1111)begin
+        if(out == 4'b1111)
             nxt_dir = 1'b0;
-       end
-       else if(out == 4'b0000)begin
+        else if(out == 4'b0000)
             nxt_dir = 1'b1;
-       end
+        else
+            nxt_dir = direction;
     end
+    else
+        nxt_dir = direction;
 end
 
-// comb for out
+// combinational circuit for out
 always @(*)begin
     if(enable == 1'b1)begin
-        if(direction == 1'b1)begin
+        if(nxt_dir == 1'b1)
             nxt_out = out + 4'b1;
-        end
-        else begin
+        else
             nxt_out = out - 4'b1;
-        end
-        
-        if(out == 4'b1111) begin
-            nxt_out = out - 4'b1;
-        end
-        else if(out == 4'b0000)begin
-            nxt_out = out + 4'b1;
-        end
     end  
-	else begin
+	else 
 		nxt_out = out;
-	end
 end     
 
 endmodule
