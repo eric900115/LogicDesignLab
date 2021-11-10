@@ -7,7 +7,7 @@ reg rst_n = 1'b0;
 reg in;
 reg [4-1:0] seq = 4'b0000;
 wire dec;
-wire [3:0] state;
+//wire [3:0] state;
 integer i, j;
 parameter cyc = 4;
 
@@ -17,8 +17,8 @@ Mealy_Sequence_Detector q1(
   .clk(clk),
   .rst_n(rst_n),
   .in(in),
-  .dec(dec),
-  .state(state)
+  .dec(dec)
+  //.state(state)
 );
 
 initial begin
