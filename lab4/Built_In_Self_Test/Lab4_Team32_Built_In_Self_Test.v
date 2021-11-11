@@ -7,14 +7,14 @@ input scan_en;
 output scan_in;
 output scan_out;
 
-Many_To_One_LFSR LFSR(clk, rst_n, scan_in, scan_en);
+Many_To_One_LFSR LFSR(clk, rst_n, scan_in);
 Scan_Chain_Design scan_chain(clk, rst_n, scan_in, scan_en, scan_out);
 
 endmodule
 
-module Many_To_One_LFSR(clk, rst_n, data, scan_en);
+module Many_To_One_LFSR(clk, rst_n, data);
 input clk;
-input rst_n, scan_en;
+input rst_n;
 output data;
 
 reg [7:0] out;
@@ -34,10 +34,7 @@ assign in_DFF0 = out[7] ^ out[3] ^ out[2] ^ out[1];
 assign data = out[7];
 
 always @(*)begin
-    //if(scan_en == 1'b1)
     next_out = {out[6:0], in_DFF0};
-    //else
-    //    next_out = out;
 end
 
 endmodule

@@ -32,7 +32,6 @@ always@(posedge clk) begin
         hit <= 1'b0;  
     end
     else begin  // ren == 1'b1
-        //if(found_match[pri_addr] == 1'b1) begin
         if(match == 1'b1) begin
             dout <= pri_addr;
             hit <= 1'b1;
@@ -42,7 +41,6 @@ always@(posedge clk) begin
            hit <= 1'b0; 
         end
     end
-       
 end
 
 assign sel = pri[8] | pri[9] | pri[10] | pri[11] | pri[12] | pri[13] | pri[14] | pri[15];
@@ -50,24 +48,6 @@ assign match = |pri;
 
 always @(*) begin
     if(ren == 1'b1) begin
-        /*
-       {pri[0], found_match[0]} = (cam_data[0] === din)? 2'b11 : 2'b00;
-       {pri[1], found_match[1]} = (cam_data[1] === din)? 2'b11 : 2'b00;
-       {pri[2], found_match[2]} = (cam_data[2] === din)? 2'b11 : 2'b00;
-       {pri[3], found_match[3]} = (cam_data[3] === din)? 2'b11 : 2'b00;
-       {pri[4], found_match[4]} = (cam_data[4] === din)? 2'b11 : 2'b00;
-       {pri[5], found_match[5]} = (cam_data[5] === din)? 2'b11 : 2'b00;
-       {pri[6], found_match[6]} = (cam_data[6] === din)? 2'b11 : 2'b00;
-       {pri[7], found_match[7]} = (cam_data[7] === din)? 2'b11 : 2'b00;
-       {pri[8], found_match[8]} = (cam_data[8] === din)? 2'b11 : 2'b00;
-       {pri[9], found_match[9]} = (cam_data[9] === din)? 2'b11 : 2'b00;
-       {pri[10], found_match[10]} = (cam_data[10] === din)? 2'b11 : 2'b00;
-       {pri[11], found_match[11]} = (cam_data[11] === din)? 2'b11 : 2'b00;
-       {pri[12], found_match[12]} = (cam_data[12] === din)? 2'b11 : 2'b00;
-       {pri[13], found_match[13]} = (cam_data[13] === din)? 2'b11 : 2'b00;
-       {pri[14], found_match[14]} = (cam_data[14] === din)? 2'b11 : 2'b00;
-       {pri[15], found_match[15]} = (cam_data[15] === din)? 2'b11 : 2'b00;
-       */
        pri[0] = (cam_data[0] === din)? 1'b1: 1'b0;
        pri[1] = (cam_data[1] === din)? 1'b1: 1'b0;
        pri[2] = (cam_data[2] === din)? 1'b1: 1'b0;
@@ -84,34 +64,14 @@ always @(*) begin
        pri[13] = (cam_data[13] === din)? 1'b1: 1'b0;
        pri[14] = (cam_data[14] === din)? 1'b1: 1'b0;
        pri[15] = (cam_data[15] === din)? 1'b1: 1'b0;
-       /*
-       found_match[0] = (cam_data[0] === din)? 1:0;
-       found_match[1] = (cam_data[1] === din)? 1:0;
-       found_match[2] = (cam_data[2] === din)? 1:0;
-       found_match[3] = (cam_data[3] === din)? 1:0;
-       found_match[4] = (cam_data[4] === din)? 1:0;
-       found_match[5] = (cam_data[5] === din)? 1:0;
-       found_match[6] = (cam_data[6] === din)? 1:0;
-       found_match[7] = (cam_data[7] === din)? 1:0;
-       found_match[8] = (cam_data[8] === din)? 1:0;
-       found_match[9] = (cam_data[9] === din)? 1:0;
-       found_match[10] = (cam_data[10] === din)? 1:0;
-       found_match[11] = (cam_data[11] === din)? 1:0;
-       found_match[12] = (cam_data[12] === din)? 1:0;
-       found_match[13] = (cam_data[13] === din)? 1:0;
-       found_match[14] = (cam_data[14] === din)? 1:0;
-       found_match[15] = (cam_data[15] === din)? 1:0;
-       */
-       
-       
-       //[3:0] en0, en1
+              
        if(sel == 1'b1) begin
            pri_addr = {1'b1, en1};
        end
        else begin
            pri_addr = {1'b0, en0};
        end
-        
+
     end
     else begin
         pri = 16'b0;
@@ -127,5 +87,6 @@ output wire [2:0] out;
 assign out[0] = (((~data[6]) & ((~data[4]) & (~data[2]) & data[1]) | ((~data[4]) & data[3]) | data[5]) | data[7]);
 assign out[1] = ((~data[5]) & (~data[4]) & (data[2] | data[3]) | data[6] | data[7]);
 assign out[2] = (data[4] | data[5] | data[6] | data[7]);
+
 endmodule
 
