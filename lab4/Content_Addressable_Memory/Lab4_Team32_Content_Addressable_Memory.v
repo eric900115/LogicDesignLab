@@ -48,6 +48,7 @@ assign match = |pri;
 
 always @(*) begin
     if(ren == 1'b1) begin
+      
        pri[0] = (cam_data[0] === din)? 1'b1: 1'b0;
        pri[1] = (cam_data[1] === din)? 1'b1: 1'b0;
        pri[2] = (cam_data[2] === din)? 1'b1: 1'b0;
@@ -65,6 +66,7 @@ always @(*) begin
        pri[14] = (cam_data[14] === din)? 1'b1: 1'b0;
        pri[15] = (cam_data[15] === din)? 1'b1: 1'b0;
               
+       //[3:0] en0, en1
        if(sel == 1'b1) begin
            pri_addr = {1'b1, en1};
        end
