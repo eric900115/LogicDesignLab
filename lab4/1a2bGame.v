@@ -1,11 +1,11 @@
 `timescale 1ns / 1ps
 
-module test(in, clk, out, in_debounce, in_onepulse, clk_27, clk_19);
+module test(in, clk, out, in_debounce, clk_27, clk_19);
     input in;
     input clk;
     output out;
     
-    output in_debounce, in_onepulse;    
+    output in_debounce;    
     output clk_27, clk_19;
     
     clock_div_27 clk27(clk, clk_27);
@@ -53,7 +53,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
     
     getInput get_in(
         .clk(clk), 
-        .start(start),  //
+        .start(start_onepluse),  //
         .button(button), 
         .enter(enter_onepluse), 
         .guesses(guesses), 
@@ -85,8 +85,8 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
     debounce debounce_start(start_debounce, start, clk_27);
     onepulse onpluse_start(start_debounce, clk_19, start_onepluse);
     
-    debounce debounce_enter(enter_debounce, enter, clk_27);
-    onepulse onpluse_enter(enter_debounce, clk_19, enter_onepluse);
+    debounce debounce_enter(enter_debounce, enter, clk_19);
+    onepulse onpluse_enter(enter_debounce, clk_27, enter_onepluse);
     
     select7segment(out, clk_27, control, chosenOut);
     
@@ -274,19 +274,19 @@ module getInput(clk, start, button, enter, guesses, finish);
         case(state)
             S0: begin
                 next_state = (enter == 1'b1)? S1 : state;
-                next_guesses = (enter == 1'b0)? 16'd3/*{guesses[11:0], 4'd2 button[3:0]}*/ : guesses; 
+                next_guesses = (enter == 1'b1)? 16'd3/*{guesses[11:0], 4'd2 button[3:0]}*/ : guesses; 
             end
             S1: begin
                 next_state = (enter == 1'b1)? S2 : state;
-                next_guesses = (enter == 1'b0)? 16'd5/*{guesses[11:0], 4'd4 button[3:0]}*/ : guesses;
+                next_guesses = (enter == 1'b1)? 16'd5/*{guesses[11:0], 4'd4 button[3:0]}*/ : guesses;
             end
             S2: begin
                 next_state = (enter == 1'b1)? S3 : state;
-                next_guesses = (enter == 1'b0)? 16'd7/*{guesses[11:0], 4'd6 button[3:0]}*/ : guesses;
+                next_guesses = (enter == 1'b1)? 16'd7/*{guesses[11:0], 4'd6 button[3:0]}*/ : guesses;
             end
             S3: begin
                 next_state = (enter == 1'b1)? F0 : state;
-                next_guesses = (enter == 1'b0)? 16'd9/*{guesses[11:0], 4'd8 button[3:0]}*/ : guesses;
+                next_guesses = (enter == 1'b1)? 16'd9/*{guesses[11:0], 4'd8 button[3:0]}*/ : guesses;
             end
             default: begin
                 next_state = state;
@@ -296,7 +296,7 @@ module getInput(clk, start, button, enter, guesses, finish);
         endcase
     end
     
-    assign finish = (state == F0 ? 1'b1 : 1'b0);
+    assign finish = (state == F0) ? 1'b1 : 1'b0;
 endmodule
 
 // get result
@@ -453,14 +453,14 @@ endmodule
 module debounce(pb_debounced, pb, clk);
     output pb_debounced;
     input pb, clk;
-    reg [3:0] DFF;
+    reg [7:0] DFF;
     
     always @(posedge clk)
         begin
-            DFF[3:1] <= DFF[2:0];
+            DFF[7:1] <= DFF[6:0];
             DFF[0] <= pb;
         end
-    assign pb_debounced = ((DFF == 4'b1111) ? 1'b1 : 1'b0);
+    assign pb_debounced = ((DFF == 8'b11111111) ? 1'b1 : 1'b0);
 endmodule
 
 

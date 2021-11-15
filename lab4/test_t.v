@@ -4,9 +4,9 @@ module test_t();
     reg in;
     reg clk = 1'b0;
     
-    wire out, in_debounce, in_onepulse, clk_27, clk_19;
+    wire out, in_debounce, clk_27, clk_19;
     integer i;
-    test t0(in, clk, out, in_debounce, in_onepulse, clk_27, clk_19);
+    test t0(in, clk, out, in_debounce, clk_27, clk_19);
     
     initial begin
         for(i = 0; i < 10000000;i=i+1) begin
