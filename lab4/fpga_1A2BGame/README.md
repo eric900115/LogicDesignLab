@@ -5,3 +5,6 @@
 
 **可能的 bug**
 - random 出的數字不正確，會一直變
+
+**DEMO 影片**
+- [Click to Watch](https://www.shorturl.at/iuvJ3)
