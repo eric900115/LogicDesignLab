@@ -1,20 +1,5 @@
 `timescale 1ns / 1ps
 
-module test(in, clk, out, in_debounce, clk_27, clk_19);
-    input in;
-    input clk;
-    output out;
-    
-    output in_debounce;    
-    output clk_27, clk_19;
-    
-    clock_div_27 clk27(clk, clk_27);
-    clock_div_19 clk19(clk, clk_19);
-    
-    debounce debounce_test(in_debounce, in, clk_27);
-    onepulse onepulse_test(in_debounce, clk_19, out);
-endmodule
-
 module top(clk, rst_n, button, enter, start, chosenOut, control);
     input clk, rst_n;
     input [3:0] button;
@@ -24,7 +9,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
     
     wire [31:0] out;
     reg [2:0] state, next_state;
-    reg start_in, next_start_in; 
+    reg start_in, next_start_in, start_rs, next_start_rs; 
     wire finish_in, finish_rs;
     reg [15:0] fixedRandom, next_fixed;
     reg [3:0] in3, in2, in1, in0;
@@ -46,14 +31,14 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
     // parameter F0 = 3'd4;
     
     Many_To_One_LFSR generate_random(
-        .clk(clk_19), 
+        .clk(clk), 
         .rst_n(reset_onepluse), 
         .data(randoms)
     );
     
     getInput get_in(
         .clk(clk_19), 
-        .start(start_onepluse),  //
+        .start(start_in),  //
         .button(button), 
         .enter(enter_onepluse), 
         .guesses(guesses), 
@@ -61,8 +46,8 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
     );
     
     getResult get_rs(
-        .clk(clk_19), 
-        .start(finish_in), 
+        .clk(clk), 
+        .start(start_rs), 
         .randoms(randoms), 
         .guesses(guesses), 
         .num_A(num_A),
@@ -96,6 +81,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
             state <= INIT;
             fixedRandom <= next_fixed;
             start_in <= next_start_in;
+            start_rs <= next_start_rs;
             in3 <= next_in3;
             in2 <= next_in2;
             in1 <= next_in1;
@@ -105,6 +91,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
             state <= next_state;
             fixedRandom <= next_fixed;
             start_in <= next_start_in;
+            start_rs <= next_start_rs;
             in3 <= next_in3;
             in2 <= next_in2;
             in1 <= next_in1;
@@ -119,6 +106,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
                 next_state = (start_onepluse == 1'b1)? GET_IN : state;
                 next_fixed = randoms;
                 next_start_in = 1'b1;
+                next_start_rs = 1'b0;
                 next_in3 = 4'h1;
                 next_in2 = 4'ha;
                 next_in1 = 4'h2;
@@ -128,6 +116,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
                 next_state = (finish_in == 1'b1)? GET_RS : state;
                 next_fixed = fixedRandom;
                 next_start_in = 1'b0;
+                next_start_rs = (finish_in == 1'b1)? 1'b1 : 1'b0;
                 next_in3 = guesses[15:12];
                 next_in2 = guesses[11:8];
                 next_in1 = guesses[7:4];
@@ -137,6 +126,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
                 next_state = (finish_rs == 1'b1)? SHOW : state;
                 next_fixed = fixedRandom;
                 next_start_in = 1'b0;
+                next_start_rs = 1'b0;
 //                next_in3 = in3;
 //                next_in2 = in2;
 //                next_in1 = in1;
@@ -147,9 +137,10 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
                 next_in0 = 4'hb;
             end
             default: begin
-                next_state = (enter_onepluse == 1'b1) ? (num_A == 3'd4 ? INIT : GET_IN) :state;
+                next_state = (enter_onepluse == 1'b1) ? (num_A == 4'd4 ? INIT : GET_IN) :state;
                 next_fixed = fixedRandom;
-                next_start_in = (enter_onepluse == 1'b1 && num_A != 3'd4)? 1'b1 : 1'b0;
+                next_start_in = (enter_onepluse == 1'b1 && num_A != 4'd4)? 1'b1 : 1'b0;
+                next_start_rs = 1'b0;
 //                next_in3 = num_A;
 //                next_in2 = 4'ha;
 //                next_in1 = num_B;
@@ -317,16 +308,18 @@ module getResult(clk, start, randoms, guesses, num_A, num_B, finish);
     
     wire [3:0]random[3:0];
     wire [3:0]guess[3:0];
+    
+    // assign {random[3], random[2], random[1], random[0]} = randoms;
     assign random[3] = randoms[15:12];
     assign random[2] = randoms[11:8];
     assign random[1] = randoms[7:4];
     assign random[0] = randoms[3:0];
-    // assign {random[3], random[2], random[1], random[0]} = randoms;
+    
+    // assign {guess[3], guess[2], guess[1], guess[0]} = guesses;
     assign guess[3] = guesses[15:12];
     assign guess[2] = guesses[11:8];
     assign guess[1] = guesses[7:4];
     assign guess[0] = guesses[3:0];
-    // assign {guess[3], guess[2], guess[1], guess[0]} = guesses;
     reg [2:0]state, next_state;
     reg [3:0]next_numA, next_numB;
     
@@ -352,22 +345,22 @@ module getResult(clk, start, randoms, guesses, num_A, num_B, finish);
     always @(*) begin
         case(state)
             S0: begin
-                next_numA = num_A + (random[3] === guess[3]? 1'b1 : 1'b0);
+                next_numA = num_A + (4'd1 == guesses[15:12]? 1'b1 : 1'b0);
                 next_numB = num_B + (((random[3] === guess[0]) || (random[3] === guess[1]) || (random[3] === guess[2]))? 1'b1 : 1'b0);
                 next_state = S1;
                 end
             S1: begin
-                next_numA = num_A + (random[2] === guess[2]? 1'b1 : 1'b0);
-                next_numB = num_B + (((random[2] === guess[0]) || (random[2] === guess[1]) || (random[2] === guess[3]))? 3'd2 : 1'b0);
+                next_numA = num_A + (4'd3 == guesses[11:8]? 1'b1 : 1'b0);
+                next_numB = num_B + (((random[2] === guess[0]) || (random[2] === guess[1]) || (random[2] === guess[3]))? 1'b1 : 1'b0);
                 next_state = S2;
                 end
             S2: begin
-                next_numA = num_A + (random[1] === guess[1]? 1'b1 : 1'b0);
-                next_numB = num_B + (((random[1] === guess[0]) || (random[1] === guess[2]) || (random[1] === guess[3]))? 3'd4 : 1'b0);        
+                next_numA = num_A + (4'd5 == guesses[7:4]? 1'b1 : 1'b0);
+                next_numB = num_B + (((random[1] === guess[0]) || (random[1] === guess[2]) || (random[1] === guess[3]))? 1'b1 : 1'b0);        
                 next_state = S3;
                 end
             S3: begin
-                next_numA = num_A + (random[0] === guess[0]? 1'b1 : 1'b0);
+                next_numA = num_A + (4'd7 == guesses[3:0]? 1'b1 : 1'b0);
                 next_numB = num_B + (((random[0] === guess[1]) || (random[0] === guess[2]) || (random[0] === guess[3]))? 1'b1 : 1'b0);
                 next_state = F0;
                 end
