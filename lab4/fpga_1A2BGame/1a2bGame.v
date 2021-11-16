@@ -137,9 +137,11 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
                 next_in0 = 4'hb;
             end
             default: begin
-                next_state = (enter_onepluse == 1'b1) ? (num_A == 4'd4 ? INIT : GET_IN) :state;
+                next_state = (enter_onepluse == 1'b1) ? (num_A === 4'd4 ? INIT : GET_IN) :state;
                 next_fixed = fixedRandom;
-                next_start_in = (enter_onepluse == 1'b1 && num_A != 4'd4)? 1'b1 : 1'b0;
+                //next_start_in = (enter_onepluse == 1'b1)? ((num_A !== 4'd4)? 1'b1 : 1'b1) : 1'b0;
+                //next_start_in = (enter_onepluse == 1'b1)? 1'b1 : 1'b0;
+                next_start_in = 1'b1;
                 next_start_rs = 1'b0;
 //                next_in3 = num_A;
 //                next_in2 = 4'ha;
@@ -256,7 +258,8 @@ module getInput(clk, start, button, enter, guesses, finish);
     parameter S1 = 3'd1;
     parameter S2 = 3'd2;
     parameter S3 = 3'd3;
-    parameter F0 = 3'd4;
+    parameter S4 = 3'd4;
+    parameter F0 = 3'd5;
     
     always @(posedge clk) begin
         if(start == 1'b1) begin
@@ -271,26 +274,34 @@ module getInput(clk, start, button, enter, guesses, finish);
     
     always @(*) begin
         case(state)
-            S0: begin
-                next_state = (enter == 1'b1)? S1 : state;
-                next_guesses = (enter == 1'b1)? {guesses[11:0], button[3:0]} : guesses; 
+            S0: begin //reset state
+                next_state = (start == 1'b0)? S1 : state;
+                next_guesses = 16'd0;
+                //next_guesses = (enter == 1'b1)? {guesses[11:0], button[3:0]} : guesses; 
             end
             S1: begin
                 next_state = (enter == 1'b1)? S2 : state;
-                next_guesses = (enter == 1'b1)? {guesses[11:0], button[3:0]} : guesses;
+                next_guesses = (enter == 1'b1)? {guesses[11:0], button[3:0]} : {guesses[15:4], button[3:0]};
+                //next_guesses = (enter == 1'b1)? {guesses[11:0], button[3:0]} : guesses;
             end
             S2: begin
                 next_state = (enter == 1'b1)? S3 : state;
-                next_guesses = (enter == 1'b1)? {guesses[11:0], button[3:0]} : guesses;
+                next_guesses = (enter == 1'b1)? {guesses[11:0], button[3:0]} : {guesses[15:4], button[3:0]};
+                //next_guesses = (enter == 1'b1)? {guesses[11:0], button[3:0]} : guesses;
             end
             S3: begin
+                next_state = (enter == 1'b1)? S4 : state;
+                next_guesses = (enter == 1'b1)? {guesses[11:0], button[3:0]} : {guesses[15:4], button[3:0]};
+                //next_guesses = (enter == 1'b1)? {guesses[11:0], button[3:0]} : guesses;
+            end
+            S4: begin
                 next_state = (enter == 1'b1)? F0 : state;
-                next_guesses = (enter == 1'b1)? {guesses[11:0], button[3:0]} : guesses;
+                next_guesses = (enter == 1'b1)? {guesses[11:0], button[3:0]} : {guesses[15:4], button[3:0]};
+                //next_guesses = guesses;
             end
             default: begin
                 next_state = state;
                 next_guesses = guesses;
-          
             end
         endcase
     end
