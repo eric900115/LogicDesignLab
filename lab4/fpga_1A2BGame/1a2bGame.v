@@ -6,6 +6,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
     input enter, start;
     output [7:0] chosenOut;
     output [3:0] control;
+    output [15:0] fixedRandom;
     
     wire [31:0] out;
     reg [2:0] state, next_state;
@@ -30,11 +31,18 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
     parameter SHOW = 3'd4;
     // parameter F0 = 3'd4;
     
-    Many_To_One_LFSR generate_random(
+    /*Many_To_One_LFSR generate_random(
         .clk(clk), 
         .rst_n(reset_onepluse), 
         .data(randoms)
+    );*/
+    random_generator generate_random(
+         .clk(clk), 
+         .rst_n(reset_onepluse), 
+         .data(randoms)
     );
+
+
     
     getInput get_in(
         .clk(clk_19), 
@@ -48,7 +56,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
     getResult get_rs(
         .clk(clk), 
         .start(start_rs), 
-        .randoms(randoms), 
+        .randoms(fixedRandom), 
         .guesses(guesses), 
         .num_A(num_A),
         .num_B(num_B),
@@ -165,9 +173,11 @@ module select7segment(in, clk_27, control, out);
     output reg [7:0] out;
     
     reg [1:0] counter, next_counter;
+    reg display0_en;
     
     always @(posedge clk_27)begin
         counter <= next_counter;
+        display0_en <= ~display0_en;
     end
     
     always @(*)begin
@@ -205,7 +215,10 @@ module select7segment(in, clk_27, control, out);
         end
         default:begin
             control = 4'b0111;
-            out = in[31:24];
+            if(display0_en == 1'b1)
+                out = in[31:24];
+            else
+                out = 8'b1010;
         end
         
         endcase
@@ -231,12 +244,13 @@ module transToSegment(in, out);
             4'h7: out = 8'b00011111;
             4'h8: out = 8'b00000001;
             4'h9: out = 8'b00001001;
-            4'hA: out = 8'b00010001;
+            /*4'hA: out = 8'b00010001;
             4'hB: out = 8'b11000001;
             4'hC: out = 8'b01100011;
             4'hD: out = 8'b10000101;
             4'hE: out = 8'b01100001;
-            default : out = 8'b01110001;
+            4'hF: out = 8'b01110001;*/
+            default: out = 8'b11111111;
         endcase
     
     end
@@ -388,6 +402,78 @@ module getResult(clk, start, randoms, guesses, num_A, num_B, finish);
 endmodule
 
 // generate random numbers
+
+module random_generator(clk, rst_n, data);
+    input clk;
+    input rst_n;
+    output reg [15:0] data;
+
+    reg [15:0] next_data;
+    //reg [3:0] next_out_0, next_out_1, next_out_2, next_out_3;
+    wire [15:0] out;
+    reg [15:0] next_out;
+
+    Many_To_One_LFSR many_2_one(clk, rst_n, out);
+
+    always @(posedge clk) begin
+        data <= next_data;
+    end
+
+    always @(*) begin
+        if(out[15:12] >= 4'd10)
+            next_out[15:12] = out[15:12] - 4'd10;
+        else
+            next_out[15:12] = out[15:12];
+
+        if(out[11:8] >= 4'd10)
+            next_out[11:8] = out[11:8] - 4'd10;
+        else
+            next_out[11:8] = out[11:8];
+
+        if(out[7:4] >= 4'd10)
+            next_out[7:4] = out[7:4] - 4'd10;
+        else
+            next_out[7:4] = out[7:4];
+        
+        if(out[3:0] >= 4'd10)
+            next_out[3:0] = out[3:0] - 4'd10;
+        else
+            next_out[3:0] = out[3:0];
+
+        if((next_out[15:12] == next_out[11:8]) || (next_out[15:12] == next_out[7:4]) || (next_out[15:12] == next_out[3:0]) || (next_out[11:8] == next_out[7:4]) || (next_out[11:8] == next_out[3:0]) || (next_out[7:4] == next_out[3:0]))
+            next_data = data
+        else
+            next_data = next_out;
+            
+    end
+
+endmodule
+
+module Many_To_One_LFSR(clk, rst_n, out);
+    input clk;
+    input rst_n;
+    output reg [15:0] out;
+    
+    //reg [15:0] out;
+    wire [15:0] next_out;
+    //reg [15:0] next_data;
+    //wire in_DFF0;
+    
+    always @(posedge clk) begin
+        if(rst_n == 1'b1) begin
+            out <= 8'b1010110011100001;
+            //data <= 16'b0;
+        end
+        else begin
+            //out <= next_out;
+            out <= next_out;
+        end
+    end
+    
+    assign next_out = {out[0], out[15] ^ out[0], out[14] ^ out[0], out[13] ^ out[0], out[12], out[11] ^ out[0], out[10:1]};
+
+endmodule
+/*
 module Many_To_One_LFSR(clk, rst_n, data);
     input clk;
     input rst_n;
@@ -416,7 +502,7 @@ module Many_To_One_LFSR(clk, rst_n, data);
         next_data = {data[14:0], out[7]};
     end
 
-endmodule
+endmodule*/
 
 // clock_div_27
 module clock_div_27(clk, slow_clk);
