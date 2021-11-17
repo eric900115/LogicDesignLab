@@ -81,7 +81,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
     debounce debounce_enter(enter_debounce, enter, clk_27);
     onepulse onpluse_enter(enter_debounce, clk_19, enter_onepluse);
     
-    select7segment(out, clk_27, control, chosenOut);
+    select7segment select_segment(out, clk_27, clk, control, chosenOut);
     
     // sequential circuit
     always @(posedge clk) begin
@@ -166,9 +166,9 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
 endmodule
 
 // select 7 segment
-module select7segment(in, clk_27, control, out);
+module select7segment(in, clk_27, clk, control, out);
     input [31:0] in;
-    input clk_27;
+    input clk_27, clk;
     output reg [3:0] control;
     output reg [7:0] out;
     
@@ -177,6 +177,9 @@ module select7segment(in, clk_27, control, out);
     
     always @(posedge clk_27)begin
         counter <= next_counter;
+    end
+
+    always @(posedge clk) begin
         display0_en <= ~display0_en;
     end
     
@@ -203,7 +206,9 @@ module select7segment(in, clk_27, control, out);
         2'b00:begin
             // first bits
             control = 4'b1110;
-            out = in[7:0];
+            //out = in[7:0];
+            out = (display0_en == 1'b1) ? in[7:0] : 8'b11111111;
+    
         end
         2'b01:begin
             control = 4'b1101;
@@ -215,10 +220,7 @@ module select7segment(in, clk_27, control, out);
         end
         default:begin
             control = 4'b0111;
-            if(display0_en == 1'b1)
-                out = in[31:24];
-            else
-                out = 8'b1010;
+            out = in[31:24];
         end
         
         endcase
@@ -244,9 +246,9 @@ module transToSegment(in, out);
             4'h7: out = 8'b00011111;
             4'h8: out = 8'b00000001;
             4'h9: out = 8'b00001001;
-            /*4'hA: out = 8'b00010001;
+            4'hA: out = 8'b00010001;
             4'hB: out = 8'b11000001;
-            4'hC: out = 8'b01100011;
+            /*4'hC: out = 8'b01100011;
             4'hD: out = 8'b10000101;
             4'hE: out = 8'b01100001;
             4'hF: out = 8'b01110001;*/
