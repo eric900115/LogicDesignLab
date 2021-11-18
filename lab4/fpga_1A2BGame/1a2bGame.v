@@ -11,7 +11,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control, fixedRandom);
     wire [31:0] out;
     reg [2:0] state, next_state;
     reg start_in, next_start_in, start_rs, next_start_rs; 
-    wire finish_in, finish_rs;
+    wire finish_in, finish_rs, is_first_round, next_is_first_round;
     reg [15:0] fixedRandom, next_fixed;
     reg [3:0] in3, in2, in1, in0;
     reg [3:0] next_in3, next_in2, next_in1, next_in0;
@@ -91,6 +91,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control, fixedRandom);
             fixedRandom <= next_fixed;
             start_in <= next_start_in;
             start_rs <= next_start_rs;
+            is_first_round <= 1'b1;
             in3 <= next_in3;
             in2 <= next_in2;
             in1 <= next_in1;
@@ -101,6 +102,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control, fixedRandom);
             fixedRandom <= next_fixed;
             start_in <= next_start_in;
             start_rs <= next_start_rs;
+            is_first_round <= next_is_first_round;
             in3 <= next_in3;
             in2 <= next_in2;
             in1 <= next_in1;
@@ -112,7 +114,12 @@ module top(clk, rst_n, button, enter, start, chosenOut, control, fixedRandom);
     always @(*) begin
         case(state)
             INIT: begin
-                next_state = (start_onepluse == 1'b1)? GET_IN : state;
+                if(is_first_round == 1'b1)
+                    next_state = (start_onepluse == 1'b1)? GET_IN : state;
+                else begin
+                    next_state = (enter_onepluse == 1'b1)? GET_IN : state;
+                end
+                next_is_first_round = is_first_round;
                 next_fixed = randoms;
                 next_start_in = 1'b1;
                 next_start_rs = 1'b1;
@@ -123,6 +130,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control, fixedRandom);
             end  
             GET_IN: begin
                 next_state = (finish_in == 1'b1)? GET_RS : state;
+                next_is_first_round = 1'b0;
                 next_fixed = fixedRandom;
                 next_start_in = 1'b0;
                 next_start_rs = 1'b1;
@@ -134,6 +142,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control, fixedRandom);
             end  
             GET_RS: begin
                 next_state = (finish_rs == 1'b1)? SHOW : state;
+                next_is_first_round = 1'b0;
                 next_fixed = fixedRandom;
                 next_start_in = 1'b1;
                 next_start_rs = 1'b0;
@@ -148,6 +157,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control, fixedRandom);
             end
             default: begin
                 next_state = (enter_onepluse == 1'b1) ? (in3 === 4'd4 ? INIT : GET_IN) :state;
+                next_is_first_round = 1'b0;
                 next_fixed = fixedRandom;
                 //next_start_in = (enter_onepluse == 1'b1)? ((num_A !== 4'd4)? 1'b1 : 1'b1) : 1'b0;
                 //next_start_in = (enter_onepluse == 1'b1)? 1'b1 : 1'b0;
@@ -302,7 +312,7 @@ module getInput(clk, start, button, enter, guesses, finish);
             end
             S1: begin
                 next_state = (enter == 1'b1)? S2 : state;
-                next_guesses = (enter == 1'b1)? {guesses[7:0], button[3:0], button[3:0]} : {guesses[15:4], button[3:0]};
+                next_guesses = (enter == 1'b1)? {guesses[11:0], button[3:0]} : {guesses[15:4], button[3:0]};
                 //next_guesses = (enter == 1'b1)? {guesses[11:0], button[3:0]} : guesses;
             end
             S2: begin
