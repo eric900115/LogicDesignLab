@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module top(clk, rst_n, button, enter, start, chosenOut, control);
+module top(clk, rst_n, button, enter, start, chosenOut, control, fixedRandom);
     input clk, rst_n;
     input [3:0] button;
     input enter, start;
@@ -22,7 +22,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
     
     wire reset_debounce, start_debounce, enter_debounce;
     wire reset_onepluse, start_onepluse, enter_onepluse;
-    wire clk_27, clk_19;
+    wire clk_27, clk_19, clk_100;
     
     parameter INIT = 3'd0;
     //parameter GEN_RAN = 3'd1;
@@ -71,6 +71,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
     // debounce, onepulse, setting frequency of clock
     clock_div_27 clk27(clk, clk_27);
     clock_div_19 clk19(clk, clk_19);
+    clock_div_100 clk100(clk, clk_100);
     
     debounce debounce_reset(reset_debounce, rst_n, clk_27);
     onepulse onepulse_reset(reset_debounce, clk_19, reset_onepluse);
@@ -81,7 +82,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
     debounce debounce_enter(enter_debounce, enter, clk_27);
     onepulse onpluse_enter(enter_debounce, clk_19, enter_onepluse);
     
-    select7segment select_segment(out, clk_27, clk, control, chosenOut);
+    select7segment select_segment(out, clk_27, clk_100, start_in, control, chosenOut);
     
     // sequential circuit
     always @(posedge clk) begin
@@ -114,7 +115,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
                 next_state = (start_onepluse == 1'b1)? GET_IN : state;
                 next_fixed = randoms;
                 next_start_in = 1'b1;
-                next_start_rs = 1'b0;
+                next_start_rs = 1'b1;
                 next_in3 = 4'h1;
                 next_in2 = 4'ha;
                 next_in1 = 4'h2;
@@ -124,7 +125,8 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
                 next_state = (finish_in == 1'b1)? GET_RS : state;
                 next_fixed = fixedRandom;
                 next_start_in = 1'b0;
-                next_start_rs = (finish_in == 1'b1)? 1'b1 : 1'b0;
+                next_start_rs = 1'b1;
+                //next_start_rs = (finish_in == 1'b1)? 1'b1 : 1'b0;
                 next_in3 = guesses[15:12];
                 next_in2 = guesses[11:8];
                 next_in1 = guesses[7:4];
@@ -133,7 +135,7 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
             GET_RS: begin
                 next_state = (finish_rs == 1'b1)? SHOW : state;
                 next_fixed = fixedRandom;
-                next_start_in = 1'b0;
+                next_start_in = 1'b1;
                 next_start_rs = 1'b0;
 //                next_in3 = in3;
 //                next_in2 = in2;
@@ -145,12 +147,12 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
                 next_in0 = 4'hb;
             end
             default: begin
-                next_state = (enter_onepluse == 1'b1) ? (num_A === 4'd4 ? INIT : GET_IN) :state;
+                next_state = (enter_onepluse == 1'b1) ? (in3 === 4'd4 ? INIT : GET_IN) :state;
                 next_fixed = fixedRandom;
                 //next_start_in = (enter_onepluse == 1'b1)? ((num_A !== 4'd4)? 1'b1 : 1'b1) : 1'b0;
                 //next_start_in = (enter_onepluse == 1'b1)? 1'b1 : 1'b0;
                 next_start_in = 1'b1;
-                next_start_rs = 1'b0;
+                next_start_rs = 1'b1;
 //                next_in3 = num_A;
 //                next_in2 = 4'ha;
 //                next_in1 = num_B;
@@ -166,9 +168,9 @@ module top(clk, rst_n, button, enter, start, chosenOut, control);
 endmodule
 
 // select 7 segment
-module select7segment(in, clk_27, clk, control, out);
+module select7segment(in, clk_27, clk_100, start_in, control, out);
     input [31:0] in;
-    input clk_27, clk;
+    input clk_27, clk_100, start_in;
     output reg [3:0] control;
     output reg [7:0] out;
     
@@ -179,7 +181,7 @@ module select7segment(in, clk_27, clk, control, out);
         counter <= next_counter;
     end
 
-    always @(posedge clk) begin
+    always @(posedge clk_100) begin
         display0_en <= ~display0_en;
     end
     
@@ -207,7 +209,10 @@ module select7segment(in, clk_27, clk, control, out);
             // first bits
             control = 4'b1110;
             //out = in[7:0];
-            out = (display0_en == 1'b1) ? in[7:0] : 8'b11111111;
+            if(start_in == 1'b1)
+                out = in[7:0];
+            else
+                out = (display0_en == 1'b1) ? in[7:0] : 8'b11111111;
     
         end
         2'b01:begin
@@ -297,7 +302,7 @@ module getInput(clk, start, button, enter, guesses, finish);
             end
             S1: begin
                 next_state = (enter == 1'b1)? S2 : state;
-                next_guesses = (enter == 1'b1)? {guesses[11:0], button[3:0]} : {guesses[15:4], button[3:0]};
+                next_guesses = (enter == 1'b1)? {guesses[7:0], button[3:0], button[3:0]} : {guesses[15:4], button[3:0]};
                 //next_guesses = (enter == 1'b1)? {guesses[11:0], button[3:0]} : guesses;
             end
             S2: begin
@@ -312,7 +317,7 @@ module getInput(clk, start, button, enter, guesses, finish);
             end
             S4: begin
                 next_state = (enter == 1'b1)? F0 : state;
-                next_guesses = (enter == 1'b1)? {guesses[11:0], button[3:0]} : {guesses[15:4], button[3:0]};
+                next_guesses = (enter == 1'b1)? {guesses[15:0]} : {guesses[15:4], button[3:0]};
                 //next_guesses = guesses;
             end
             default: begin
@@ -372,22 +377,22 @@ module getResult(clk, start, randoms, guesses, num_A, num_B, finish);
     always @(*) begin
         case(state)
             S0: begin
-                next_numA = num_A + (4'd1 == guesses[15:12]? 1'b1 : 1'b0);
+                next_numA = num_A + (random[3] == guesses[15:12]? 1'b1 : 1'b0);
                 next_numB = num_B + (((random[3] === guess[0]) || (random[3] === guess[1]) || (random[3] === guess[2]))? 1'b1 : 1'b0);
                 next_state = S1;
                 end
             S1: begin
-                next_numA = num_A + (4'd3 == guesses[11:8]? 1'b1 : 1'b0);
+                next_numA = num_A + (random[2] == guesses[11:8]? 1'b1 : 1'b0);
                 next_numB = num_B + (((random[2] === guess[0]) || (random[2] === guess[1]) || (random[2] === guess[3]))? 1'b1 : 1'b0);
                 next_state = S2;
                 end
             S2: begin
-                next_numA = num_A + (4'd5 == guesses[7:4]? 1'b1 : 1'b0);
+                next_numA = num_A + (random[1] == guesses[7:4]? 1'b1 : 1'b0);
                 next_numB = num_B + (((random[1] === guess[0]) || (random[1] === guess[2]) || (random[1] === guess[3]))? 1'b1 : 1'b0);        
                 next_state = S3;
                 end
             S3: begin
-                next_numA = num_A + (4'd7 == guesses[3:0]? 1'b1 : 1'b0);
+                next_numA = num_A + (random[0] == guesses[3:0]? 1'b1 : 1'b0);
                 next_numB = num_B + (((random[0] === guess[1]) || (random[0] === guess[2]) || (random[0] === guess[3]))? 1'b1 : 1'b0);
                 next_state = F0;
                 end
@@ -395,7 +400,7 @@ module getResult(clk, start, randoms, guesses, num_A, num_B, finish);
                 next_numA = num_A; 
                 next_numB = num_B;
                 next_state = F0;
-                end
+            end
         
         endcase
     end
@@ -443,7 +448,7 @@ module random_generator(clk, rst_n, data);
             next_out[3:0] = out[3:0];
 
         if((next_out[15:12] == next_out[11:8]) || (next_out[15:12] == next_out[7:4]) || (next_out[15:12] == next_out[3:0]) || (next_out[11:8] == next_out[7:4]) || (next_out[11:8] == next_out[3:0]) || (next_out[7:4] == next_out[3:0]))
-            next_data = data
+            next_data = data;
         else
             next_data = next_out;
             
@@ -503,8 +508,32 @@ module Many_To_One_LFSR(clk, rst_n, data);
         next_out = {out[6:0], in_DFF0};
         next_data = {data[14:0], out[7]};
     end
-
 endmodule*/
+
+// clock_div_100
+module clock_div_100(clk, slow_clk);
+    input clk;
+    output slow_clk;
+    
+    reg slow_clk;
+    reg [30:0] counter;
+    
+    always @(posedge clk) begin
+        if(counter < 100000000)
+            counter <= counter + 1;
+        else
+            counter <= 0;
+    end
+    
+    always @(posedge clk) begin
+        if(counter < 50000000)
+            slow_clk <= 1'b0;
+        else
+            slow_clk <= 1'b1;
+    end
+
+
+endmodule
 
 // clock_div_27
 module clock_div_27(clk, slow_clk);
@@ -584,4 +613,3 @@ module onepulse(pb_debounced, clk, pb_one_pulse);
         pb_debounced_delay <= pb_debounced;
     end
 endmodule
-
