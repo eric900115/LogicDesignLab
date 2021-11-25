@@ -7,6 +7,8 @@ reg rst_n = 1'b0;
 reg start = 1'b0;
 wire signed [7:0] p;
 reg signed [7:0] tmp;
+reg signed [3:0] tmp_a = 4'b1010, tmp_b = 4'b1100;
+//wire c_a, c_b;
 
 // specify duration of a clock cycle.
 parameter cyc = 2;
@@ -24,14 +26,21 @@ initial begin
     repeat (2 ** 8) begin
         @(negedge clk)
         start = 1'b1; 
-        #(cyc * 4)
+        
+        #(cyc * 2)
+        
+        #(cyc * 2)
+        {tmp_a, tmp_b} = {a, b};
+        {a, b} = 8'b11001110;
 
         #(cyc)
+        {a, b} = {tmp_a, tmp_b};
         start = 1'b0;
         tmp = a * b;
         if(tmp !== p)
             $display("error occurs at sub a=%d b=%d p=%b a*b=%b", a, b, p, tmp);
         {a, b} = {a, b} + 4'b0001;
+        
         #cyc
         tmp = a*b;
     end

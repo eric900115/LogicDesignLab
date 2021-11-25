@@ -1,11 +1,10 @@
 `timescale 1ns/1ps
 
-module Traffic_Light_Controller (clk, rst_n, lr_has_car, hw_light, lr_light, state);
+module Traffic_Light_Controller (clk, rst_n, lr_has_car, hw_light, lr_light);
 input clk, rst_n;
 input lr_has_car;
 output [2:0] hw_light;
 output [2:0] lr_light;
-output [2:0] state;
 
 //light[0]:Red light[1]:Yellow light[2]:Green
 reg [2:0] hw_light, lr_light;
@@ -21,6 +20,10 @@ parameter LR_G = 3'd3;//hw:r
 parameter LR_Y = 3'd4;//hw:r
 parameter LR_R = 3'd5;//hw:r
 
+parameter RED = 3'b001;
+parameter YELLOW = 3'b010;
+parameter GREEN = 3'b100;
+
 always @(posedge clk) begin
     if(rst_n == 1'b0) begin
         state <= HW_G;
@@ -32,13 +35,13 @@ always @(posedge clk) begin
     end
 end
 
-assign is_80_cycles = (cycles == 7'd80) ? 1'b1 : 1'b0;
+assign is_80_cycles = (cycles == 7'd81) ? 1'b1 : 1'b0;
 
 always @(*) begin
     case(state)
         HW_G:begin
-            hw_light = 3'b100;
-            lr_light = 3'b001;
+            hw_light = GREEN;
+            lr_light = RED;
             next_state = (is_80_cycles == 1'b1 && lr_has_car == 1'b1) ? HW_Y : HW_G;
             if(is_80_cycles == 1'b0) begin
                 next_cycles = cycles + 7'd1;
@@ -51,8 +54,8 @@ always @(*) begin
             end
         end
         HW_Y:begin
-            hw_light = 3'b010;
-            lr_light = 3'b001;
+            hw_light = YELLOW;
+            lr_light = RED;
             if(cycles == 7'd20) begin
                 next_state = HW_R;
                 next_cycles = 7'd1;
@@ -63,8 +66,8 @@ always @(*) begin
             end
         end
         HW_R:begin
-            hw_light = 3'b001;
-            lr_light = 3'b001;
+            hw_light = RED;
+            lr_light = RED;
             if(cycles == 7'd1) begin
                 next_state = LR_G;
                 next_cycles = 7'd1;
@@ -75,8 +78,8 @@ always @(*) begin
             end
         end
         LR_G:begin
-            hw_light = 3'b001;
-            lr_light = 3'b100;
+            hw_light = RED;
+            lr_light = GREEN;
             if(cycles == 7'd80) begin
                 next_state = LR_Y;
                 next_cycles = 7'd1;
@@ -87,8 +90,8 @@ always @(*) begin
             end
         end
         LR_Y:begin
-            hw_light = 3'b001;
-            lr_light = 3'b010;
+            hw_light = RED;
+            lr_light = YELLOW;
             if(cycles == 7'd20) begin
                 next_state = LR_R;
                 next_cycles = 7'd1;
@@ -99,8 +102,8 @@ always @(*) begin
             end
         end
         default:begin //LR_R
-            hw_light = 3'b001;
-            lr_light = 3'b001;
+            hw_light = RED;
+            lr_light = RED;
             if(cycles == 7'd1) begin
                 next_state = HW_G;
                 next_cycles = 7'd1;

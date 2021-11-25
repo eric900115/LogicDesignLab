@@ -14,7 +14,10 @@ parameter Wait = 2'd0;
 parameter Cal = 2'd1;
 parameter Finish = 2'd2;
 
-Booth mul(start, finish_cal, a, b, p, clk);
+reg signed [3:0] cal_a, cal_b, next_cal_a, next_cal_b;
+
+//combinational and sequential circuit for state cal
+Cal cal(start, finish_cal, cal_a, cal_b, p, clk, state);
 
 always @(posedge clk) begin
     if(rst_n == 1'b0) begin
@@ -25,24 +28,35 @@ always @(posedge clk) begin
     end
 end
 
+always @(posedge clk) begin
+    cal_a <= next_cal_a;
+    cal_b <= next_cal_b;
+end
+
 always @(*) begin
     case(state)
         Wait: begin
             next_state = (start == 1'b1) ? Cal : Wait;
+            next_cal_a = a;
+            next_cal_b = b;
         end
         Cal: begin
             next_state = (finish_cal == 1'b1) ? Finish : Cal; 
+            next_cal_a = cal_a;
+            next_cal_b = cal_b;
         end
         default: begin //Finish
             next_state = Wait;
+            next_cal_a = cal_a;
+            next_cal_b = cal_b;
         end
     endcase
 end
 
 endmodule
 
-module Booth(start, finish, a, b, product, clk);
-input start;
+module Cal(start, finish, a, b, product, clk, state);
+input start, state;
 input clk;
 input signed [3:0] a, b;
 output signed [7:0] product;
@@ -50,21 +64,24 @@ output finish;
 
 reg signed [8:0] p;
 reg signed [8:0] next_p;
-//reg signed [8:0] product;
 wire signed [8:0] a_8bits;
 reg [2:0] cycles, next_cycles;
 reg shift_bit, next_shift_bit;
 
+parameter Wait = 2'd0;
+parameter Cal = 2'd1;
+parameter Finish = 2'd2;
+
 always @(posedge clk) begin
-    if(start == 1'b0) begin
+    if(state == Cal) begin
+        cycles <= next_cycles;
+        shift_bit <= next_shift_bit;
+        p <= next_p;       
+    end
+    else begin
         cycles <= 3'd1;
         shift_bit <= 1'b0;
         p <= {5'b0, b};
-    end
-    else begin
-        cycles <= next_cycles;
-        shift_bit <= next_shift_bit;
-        p <= next_p;   
     end
 end
 

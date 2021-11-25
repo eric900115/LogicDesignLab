@@ -93,18 +93,20 @@ always @(*) begin
                     next_finish_cal = 1'b0;
                 end
             end
-
+            
         end
         else begin
             next_cal_a = cal_a;
             next_cal_b = cal_b - cal_a;
 
             if(cal_a == 16'd0) begin
+                //next_cal_a == 0
                 next_gcd_cal = cal_b;
                 next_finish_cal = 1'b1;
             end
             else begin
                 if(cal_a == cal_b) begin
+                    //next_cal_b == 0
                     next_gcd_cal = cal_a;
                     next_finish_cal = 1'b1;
                 end
@@ -124,22 +126,6 @@ always @(*) begin
     end
 end
 
-// always @(*) begin
-//     if(state == CAL) begin
-//         if(cal_a == cal_b) begin
-//             next_gcd_cal = cal_a;
-//             next_finish_cal = 1'b1;
-//         end
-//         else begin
-//             next_gcd_cal = gcd_cal;
-//             next_finish_cal = 1'b0;
-//         end
-//     end
-//     else begin
-//         next_gcd_cal = gcd_cal;
-//         next_finish_cal = 1'b0;
-//     end
-// end
 
 always @(posedge clk) begin
     if(state == FINISH) begin
