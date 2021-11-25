@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module top_module(clk, rst_n, insert_5, insert_10, insert_50, cancel, display, digit, PS2_DATA, PS2_CLK);
+module top_module(clk, rst_n, insert_5, insert_10, insert_50, cancel, display, digit, PS2_DATA, PS2_CLK, LED);
 input clk, rst_n;
 input insert_5, insert_10, insert_50, cancel;
 output [7:0] display;
@@ -107,20 +107,18 @@ reg state, next_state;
 reg sel, next_sel;
 reg [6:0] next_coin;
 
-assign available_a = (coin >= 7'd75) ? 1'b1 : 1'b0;
-assign available_s = (coin >= 7'd50) ? 1'b1 : 1'b0;
-assign available_d = (coin >= 7'd30) ? 1'b1 : 1'b0;
-assign available_f = (coin >= 7'd25) ? 1'b1 : 1'b0;
+assign available_a = (coin >= 7'd75 && state == Insert) ? 1'b1 : 1'b0;
+assign available_s = (coin >= 7'd50 && state == Insert) ? 1'b1 : 1'b0;
+assign available_d = (coin >= 7'd30 && state == Insert) ? 1'b1 : 1'b0;
+assign available_f = (coin >= 7'd25 && state == Insert) ? 1'b1 : 1'b0;
 
 //sequential circuit
 always @(posedge clk) begin
     if(rst_n == 1'b1) begin
         state <= Insert;
-        //coin <= 7'd0;
     end
     else begin
         state <= next_state;
-        //coin <= next_coin;
     end
 end
 
@@ -432,102 +430,19 @@ module clock_div_100(clk, slow_clk);
     input clk;
     output slow_clk;
     
-    reg [25:0] counter;
-    
-    always @(posedge clk) begin
-        //if(rst_n == 1'b0)
-        //    counter <= 31'd0;
-        //else begin
-            if(counter <= 26'd1000000000)
-                counter <= counter + 26'd1;
-            else
-                counter <= 26'd0;
-        // end
-    end
-    
-    assign slow_clk = (counter === 26'd999999999) ? 1'b1 : 1'b0;
-
-endmodule
-/*
-// clock_div_27
-module clock_div_27(clk, slow_clk);
-    input clk;
-    output slow_clk;
-
-    reg [26:0] counter;
-    
-    always @(posedge clk) begin
-        if(counter < 27'd250000)
-            counter <= counter + 27'd1;
-        else
-            counter <= 27'd0;
-    end
-    
-
-    assign slow_clk = (counter == 27'd249999) ? 1'b1 : 1'b0;
-
-    /*always @(posedge clk) begin
-        if(counter < 125000)
-            slow_clk <= 1'b0;
-        else
-            slow_clk <= 1'b1;
-    end*/
-
-/*
-endmodule
-
-// colck_div_19
-module clock_div_19(clk, slow_clk);
-    input clk;
-    output slow_clk;
-
-    reg [17:0] counter;
-    
-    always @(posedge clk) begin
-        if(counter < 17'd25000)
-            counter <= counter + 17'd1;
-        else
-            counter <= 17'd0;
-    end
-    
-    assign slow_clk = (counter == 17'd24999) ? 1'b1 : 1'b0;
-
-    /*always @(posedge clk) begin
-        if(counter < 12500)
-            slow_clk <= 1'b0;
-        else
-            slow_clk <= 1'b1;
-    end*/
-/*
-
-endmodule*/
-
-// clock_div_100
-/*
-module clock_div_100(clk, slow_clk);
-    input clk;
-    output slow_clk;
-    
-    reg slow_clk;
     reg [30:0] counter;
     
     always @(posedge clk) begin
-        if(counter < 100000000)
-            counter <= counter + 1;
+        if(counter <= 31'd100000000)
+            counter <= counter + 31'd1;
         else
-            counter <= 0;
+            counter <= 31'd0;
     end
     
-    always @(posedge clk) begin
-        if(counter < 50000000)
-            slow_clk <= 1'b0;
-        else
-            slow_clk <= 1'b1;
-    end
-
+    assign slow_clk = (counter === 31'd99999999) ? 1'b1 : 1'b0;
 
 endmodule
-*/
+
 // clock_div_27
 module clock_div_27(clk, slow_clk);
     input clk;
@@ -549,7 +464,6 @@ module clock_div_27(clk, slow_clk);
         else
             slow_clk <= 1'b1;
     end
-
 
 endmodule
 
@@ -574,7 +488,6 @@ module clock_div_19(clk, slow_clk);
         else
             slow_clk <= 1'b1;
     end
-
 
 endmodule
 
