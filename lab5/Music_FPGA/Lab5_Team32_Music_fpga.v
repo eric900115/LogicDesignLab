@@ -9,8 +9,6 @@ module Music_fpga (
 	output pmod_4	//SHUTDOWN_N
     );
     
-    reg rst;
-    
     // keyboard
     wire [511:0] key_down;
 	wire [8:0] last_change;
@@ -22,6 +20,7 @@ module Music_fpga (
     parameter key_s = 9'b0_0001_1011;
     parameter key_r = 9'b0_0010_1101;
     
+    reg rst;
     reg w_pressed;  // ascend
     reg s_pressed;  // descend
     reg r_pressed;  // change the sec per note
@@ -29,14 +28,16 @@ module Music_fpga (
     // audio
     parameter DUTY_BEST = 10'd512;
     reg [31:0] BEAT_FREQ, next_BEAT_FREQ; //32'd2: one beat = 0.5 sec, 32'd1: one beat = 1 sec
-    
+    parameter [31:0] cnt_1 = 32'd100_000_000;
+    parameter [31:0] cnt_1_2 = 32'd50_000_000;
+
     wire [31:0] freq;
-    wire [5:0] ibeatNum;
+    wire [4:0] ibeatNum;
     wire beatFreq;
     
     assign pmod_2 = 1'd1;	//no gain(6dB)
     assign pmod_4 = 1'd1;	//turn-on 
-       
+     
     KeyboardDecoder key_de (
         .key_down(key_down),
 		.last_change(last_change),
@@ -47,29 +48,21 @@ module Music_fpga (
 		.clk(clk)
 	);
 	
-    scale_direction sd0(
+    ClockDivider clk_divider(
+        .clk(clk), 
+        .rst(rst), 
+        .cnt_max(BEAT_FREQ),
+        .clk_div(beatFreq)
+    ); 
+     
+    UserCtrl playerCtrl (
         .clk(clk),
         .rst(rst),
+        .beatFreq(beatFreq),
         .ascend(w_pressed),
         .descend(s_pressed),
-        .ibeatNum(ibeatNum)
-    );
-    
-    //Generate beat speed
-    PWM_gen btSpeedGen ( 
-        .clk(clk), 
-        .reset(rst),
-        .freq(BEAT_FREQ),
-        .duty(DUTY_BEST), 
-        .PWM(beatFreq)
-    );
-    
-    //manipulate beat
-    PlayerCtrl playerCtrl_00 ( 
-        .clk(beatFreq),
-        .reset(rst),
         .ibeat(ibeatNum)
-    );
+    );    
     
     //Generate variant freq. of tones
     scale scale0(
@@ -88,10 +81,10 @@ module Music_fpga (
     
     always @(posedge clk) begin
         if (been_ready && key_down[last_change] == 1'b1) begin
-            rst <= (last_change == LEFT_ENTER || last_change == RIGHT_ENTER)? 1'b1 : 1'b0;
-            w_pressed <= (last_change == key_w)? 1'b1 : 1'b0;
-            s_pressed <= (last_change == key_s)? 1'b1 : 1'b0;
-            r_pressed <= (last_change == key_r)? 1'b1 : 1'b0;
+            rst <= (last_change == LEFT_ENTER || last_change == RIGHT_ENTER) ? 1'b1 : 1'b0;
+            w_pressed <= (last_change == key_w) ? 1'b1 : 1'b0;
+            s_pressed <= (last_change == key_s) ? 1'b1 : 1'b0;
+            r_pressed <= (last_change == key_r) ? 1'b1 : 1'b0;
         end
         else begin
             rst <= 1'b0;
@@ -102,82 +95,97 @@ module Music_fpga (
     end
     
     always @(posedge clk) begin
-        if(rst == 1'b1) begin
-            BEAT_FREQ <= 32'd1;
-        end
-        else begin
-            BEAT_FREQ <= next_BEAT_FREQ;
-        end
+        if(rst == 1'b1) BEAT_FREQ <= cnt_1;
+        else    BEAT_FREQ <= next_BEAT_FREQ;
     end
+    
     always @(*) begin
-        if(r_pressed == 1'b1) begin
-            if(BEAT_FREQ == 32'd1)
-                next_BEAT_FREQ = 32'd2;
-            else if(BEAT_FREQ == 32'd2)
-                next_BEAT_FREQ = 32'd1;
-            else
-                next_BEAT_FREQ = BEAT_FREQ; 
-        end
-        next_BEAT_FREQ = (rst == 1'b1)? 32'd1 : BEAT_FREQ;
+    if(r_pressed == 1'b1) begin
+        if(BEAT_FREQ == cnt_1)  next_BEAT_FREQ = cnt_1_2;
+        else                    next_BEAT_FREQ = cnt_1;
+    end
+    else next_BEAT_FREQ = BEAT_FREQ;
     end
     
 endmodule
 
-module scale_direction (
+module ClockDivider (
     input clk,
     input rst,
-    input ascend,
-    input descend,
-    output reg[4:0] ibeatNum
-    );
+    input [31:0] cnt_max,
+    output clk_div
+  );
+
+  reg [31:0] cnt;
     
-    parameter C8 = 5'd28;
-    parameter C4 = 5'd0;
-    
-    reg [4:0] next_ibeatNum;
-    reg ascend_state, next_ascend_state;
-    
-    always @(posedge clk) begin
+  always @(posedge clk) begin
         if(rst == 1'b1) begin
-            ibeatNum <= 5'd0;
-            ascend_state <= 1'b1;
+            cnt <= 32'b0;
         end
         else begin
-            ibeatNum <= next_ibeatNum;
-            ascend_state <= next_ascend_state;
+            if(cnt >= cnt_max)  cnt <= 32'b0;
+            else cnt <= cnt + 32'b1;
         end
+    end
+    assign clk_div = (cnt >= cnt_max)? 1'b1 : 1'b0;
+
+endmodule
+
+module UserCtrl (
+	input clk,
+	input rst,
+	input beatFreq,
+	input ascend,
+	input descend,
+	output reg [4:0] ibeat
+);
+parameter C8 = 5'd28;
+parameter C4 = 5'd0;
+reg direction, next_dir;
+reg [4:0] next_ibeat;
+
+always @(posedge clk) begin
+	if (rst) begin
+		ibeat <= C4;
+		direction <= 1'b1;
+	end
+	else begin
+		  ibeat <= next_ibeat;
+		  direction <= next_dir;
+    end
+end
+
+always @(*) begin
+    if(ibeat <= C8 && ibeat >= C4) begin
+        if(ascend == 1'b1)
+            next_dir = 1'b1;
+        else if(descend == 1'b1)
+            next_dir = 1'b0;
+        else 
+		  next_dir = direction;
+    end
+    else begin
+        next_dir = direction;
     end
     
-    always @(*) begin
-        if(ascend == 1'b1) begin
-            next_ascend_state = 1'b1;
-        end
-        else if(descend == 1'b1) begin
-            next_ascend_state = 1'b0;
-        end
-        else begin
-            next_ascend_state = ascend_state;
-        end
-    end
     
-    always @(*) begin
-        if(ascend == 1'b1) begin
-            if(ibeatNum == C8) begin
-                next_ibeatNum = ibeatNum;   // when it reaches C8, stay on the note until the direction changes
-            end
-            else begin
-                next_ibeatNum = ibeatNum + 5'd1;               
-            end
-        end
-        else begin
-            if(ibeatNum == C4) begin
-                next_ibeatNum = ibeatNum;   // when it reaches C4, stay on the note until the direction changes
-            end
-            else begin
-                next_ibeatNum = ibeatNum - 5'd1;
-            end
-        end
-    end
+    if(next_dir == 1'b1) begin
+        if(ibeat == C8)
+            next_ibeat = ibeat;
+        else
+        	next_ibeat = ibeat + 5'd1;
+	end
+	else begin
+        if(ibeat == C4)
+            next_ibeat = ibeat;
+        else
+        	next_ibeat = ibeat - 5'd1;
+	end
+//	if(ibeat <= C4 || ibeat >= C8)
+//	    next_ibeat = ibeat;
+	
+	next_ibeat = (beatFreq == 1'b1)? next_ibeat : ibeat;
+end
 endmodule
 
 module scale (
@@ -238,3 +246,4 @@ module scale (
     end
     
 endmodule
+

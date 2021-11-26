@@ -67,7 +67,7 @@ always @(*) begin
             dec = (in)? 1'b0 : 1'b0;  
         end
         default: begin
-            next_state = (in)? S0 : S0;
+            next_state = (in)? S1 : S0;
             dec = (in)? 1'b1 : 1'b0;  
         end
     endcase

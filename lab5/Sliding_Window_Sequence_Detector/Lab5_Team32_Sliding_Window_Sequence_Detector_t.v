@@ -11,6 +11,7 @@ wire dec;
 wire [3:0] state;
 integer i = 0;
 reg [4:0] cur = 5'd0;
+reg[23:0] rand; 
 
 parameter cyc = 4;
 
@@ -28,18 +29,26 @@ Sliding_Window_Sequence_Detector sq0(
 initial begin
     @(negedge clk)
     rst_n = 1'b0;
-     
-        #20 init;
-        repeated_num;
-        
-  
-   
-    @(negedge clk)
-    rst_n = 1'b1;
-    in = repeated[0];
-    @(negedge clk)
-    rst_n = 1'b1;
-    in = repeated[1];
+    
+    repeat(2**8) begin
+        rand = {$random} % 60;
+        case(rand % 4)
+            0:  init;
+            1:  repeated_num;
+            2:  last_one_occur;
+            3:  end_num;
+        endcase
+    end    
+    init;
+    repeated_num;
+    repeated_num;
+    end_num;
+    last_one_occur;
+    repeated_num;
+    end_num;
+    
+    repeated_num;
+    end_num;
     
     #cyc
     $finish;
@@ -62,6 +71,22 @@ task init;
 
     end
 endtask
+
+task last_one_occur;
+    begin
+        @(negedge clk)
+        rst_n = 1'b1;
+        in = seq[2];
+        @(negedge clk)
+        rst_n = 1'b1;
+        in = seq[1];
+        @(negedge clk)
+        rst_n = 1'b1;
+        in = seq[0];
+
+    end
+endtask
+
 task repeated_num;
     begin
         @(negedge clk)
