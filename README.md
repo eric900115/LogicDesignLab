@@ -35,3 +35,26 @@
     - Mealy Machine
     - Many-to-One Linear-Feedback Shift Register
     - One-to-Many Linear-Feedback Shift Register
+  - Content-Addressable Memory Design
+  - Scan Chain Design
+  - Built-In Self Test
+  - Mealy machine sequence detector
+  - The 1A2B Game（FPGA）
+- Lab5:Keyboard and Audio Modules
+  - Basic
+    - Keyboard sample code
+    - Audio sample codes
+  - Sliding Window Sequence Detector
+  - Traffic Light Controller
+  - Greatest Common Divisor
+  - Booth Multiplier
+  - Mixed Keyboard and Audio Modules Together（FPGA）
+  - Vending Machine（FPGA）
+- Lab6:Peripheral Components
+  - Basic
+    - VGA sample code
+    - Mouse sample codes
+  - Dual FPGA Communication（FPGA）
+  - The Slot Machine（FPGA）
+  - The Car（FPGA）
+
