@@ -1,10 +1,11 @@
 `timescale 1ns/1ps
 
-module Traffic_Light_Controller (clk, rst_n, lr_has_car, hw_light, lr_light);
+module Traffic_Light_Controller (clk, rst_n, lr_has_car, hw_light, lr_light, cycles);
 input clk, rst_n;
 input lr_has_car;
 output [2:0] hw_light;
 output [2:0] lr_light;
+output [6:0] cycles;
 
 //light[0]:Red light[1]:Yellow light[2]:Green
 reg [2:0] hw_light, lr_light;
@@ -35,22 +36,25 @@ always @(posedge clk) begin
     end
 end
 
-assign is_80_cycles = (cycles == 7'd81) ? 1'b1 : 1'b0;
 
 always @(*) begin
     case(state)
         HW_G:begin
             hw_light = GREEN;
             lr_light = RED;
-            next_state = (is_80_cycles == 1'b1 && lr_has_car == 1'b1) ? HW_Y : HW_G;
-            if(is_80_cycles == 1'b0) begin
+            if(cycles < 7'd80) begin
                 next_cycles = cycles + 7'd1;
+                next_state = HW_G;
             end
             else begin
-                if(lr_has_car == 1'b0)
+                if(lr_has_car == 1'b0) begin
                     next_cycles = 7'd80;
-                else
+                    next_state = HW_G;
+                end
+                else begin
                     next_cycles = 7'd1;
+                    next_state = HW_Y;
+                end
             end
         end
         HW_Y:begin

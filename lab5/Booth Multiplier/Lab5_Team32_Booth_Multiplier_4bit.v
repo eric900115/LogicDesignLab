@@ -17,7 +17,7 @@ parameter Finish = 2'd2;
 reg signed [3:0] cal_a, cal_b, next_cal_a, next_cal_b;
 
 //combinational and sequential circuit for state cal
-Cal cal(start, finish_cal, cal_a, cal_b, p, clk, state);
+Cal cal(start, finish_cal, next_cal_a, next_cal_b, p, clk, state);
 
 always @(posedge clk) begin
     if(rst_n == 1'b0) begin
@@ -36,19 +36,19 @@ end
 always @(*) begin
     case(state)
         Wait: begin
-            next_state = (start == 1'b1) ? Cal : Wait;
             next_cal_a = a;
             next_cal_b = b;
+            next_state = (start == 1'b1) ? Cal : Wait;
         end
         Cal: begin
-            next_state = (finish_cal == 1'b1) ? Finish : Cal; 
             next_cal_a = cal_a;
             next_cal_b = cal_b;
+            next_state = (finish_cal == 1'b1) ? Finish : Cal; 
         end
         default: begin //Finish
-            next_state = Wait;
             next_cal_a = cal_a;
             next_cal_b = cal_b;
+            next_state = Wait;
         end
     endcase
 end
