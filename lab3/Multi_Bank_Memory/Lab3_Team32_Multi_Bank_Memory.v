@@ -65,9 +65,7 @@ always @(*) begin
 end
 
 
-//assign dout = next_dout;
-
-
+//output combinational circuit
 always @(*) begin
     case (out_addr)
         2'b00:begin
@@ -200,16 +198,10 @@ output [7:0] dout;
 
 reg [7:0] memory [127:0];
 reg [7:0] dout;
-reg count;
 
 always @(posedge clk) begin
 
-    if(wen == 1'b1 && ren == 1'b1) begin
-        memory[waddr] <= din[7:0];
-        dout[7:0] <= 8'b00000000;
-    end
-    else if(wen == 1'b1 && ren == 1'b0) begin
-        memory[waddr] <= din[7:0];
+    if(wen == 1'b0 && ren == 1'b0) begin
         dout[7:0] <= 8'b00000000;
     end
     else if(wen == 1'b0 && ren == 1'b1) begin
@@ -217,6 +209,7 @@ always @(posedge clk) begin
     end
     else begin
         dout[7:0] <= 8'b00000000;
+        memory[waddr] <= din[7:0];
     end
 
 end
